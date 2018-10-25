@@ -35,9 +35,9 @@ public class MainActivity extends AppCompatActivity {
 
 //        need to capture the extra db object
 
-        db = new SQLiteDatabaseHandler(this);
+//        db = new SQLiteDatabaseHandler(this);
         final Intent intent = new Intent(getApplicationContext(), AddAMedicineInfo.class);
-        intent.putExtra("sql_obj", (Parcelable) db);
+//        intent.putExtra("sql_obj", (Parcelable) db);
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab_add_new_alarm);
 
