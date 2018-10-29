@@ -1,6 +1,7 @@
 package com.example.nusra.medreminder;
 
 import android.app.Activity;
+import android.app.AlarmManager;
 import android.content.Intent;
 import android.os.Build;
 import android.support.annotation.RequiresApi;
@@ -15,6 +16,7 @@ import java.util.Calendar;
 
 public class AddAMedicineAlarm extends AppCompatActivity {
 
+    AlarmManager alarm_manager;
     TimePicker timePicker;
     String result;
     Button settime ;
@@ -27,17 +29,28 @@ public class AddAMedicineAlarm extends AppCompatActivity {
 
         timePicker = (TimePicker)findViewById(R.id.timePicker);
         settime = (Button) findViewById(R.id.alarm_on);
+        final Calendar calendar = Calendar.getInstance();
 
         settime.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 Intent returnIntent;
                 returnIntent = new Intent();
+
+                calendar.set(Calendar.HOUR_OF_DAY, timePicker.getHour());
+                calendar.set(Calendar.MINUTE, timePicker.getMinute());
+
+                // get the int values of the hour and minute
                 int hours = timePicker.getHour();
                 int minutes = timePicker.getMinute();
-                int ampm = timePicker.get
+
+                // convert the int values to strings
+                String hour_string = String.valueOf(hours);
+                String minute_string = String.valueOf(minutes);
+
+                result = hour_string+","+minute_string;
+
                 Log.e("Data",hours+" "+minutes);
-                result = String.valueOf(hours*60+minutes);
                 returnIntent.putExtra("result",result);
                 setResult(Activity.RESULT_OK,returnIntent);
                 finish();

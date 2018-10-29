@@ -8,8 +8,6 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
 import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
 
 public class SQLiteDatabaseHandler extends SQLiteOpenHelper {
     private static final int DATABASE_VERSION = 1;
@@ -26,6 +24,15 @@ public class SQLiteDatabaseHandler extends SQLiteOpenHelper {
     private static final String KEY_MILLIS = "alarmSetMilliSec";
     private static final String[] COLUMNS = { KEY_ID, KEY_NAME, KEY_FREQUENCY,
             KEY_DATE, KEY_DAYS, KEY_HOURS, KEY_MINUTES, KEY_SECONDS, KEY_MILLIS};
+
+    private static SQLiteDatabaseHandler db;
+
+    public static synchronized SQLiteDatabaseHandler getHelper(Context context)
+    {
+        if (db == null)
+            db = new SQLiteDatabaseHandler(context);
+        return db;
+    }
 
     public SQLiteDatabaseHandler(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -130,4 +137,15 @@ public class SQLiteDatabaseHandler extends SQLiteOpenHelper {
         db.execSQL("delete from "+ TABLE_NAME);
         db.close();
     }
+
+//    public synchronized SQLiteDatabase getDBInstance(Context mContext) {
+//        SQLiteDatabase db = this.getWritableDatabase();
+//        if (db == null) {
+//            Log.e("Data","DB already exists");
+//            SQLiteDatabaseHandler mdb = new SQLiteDatabaseHandler(mContext);
+//            SQLiteDatabase mDB = this.getWritableDatabase();
+//            db = mDB;
+//        }
+//        return db;
+//    }
 }
