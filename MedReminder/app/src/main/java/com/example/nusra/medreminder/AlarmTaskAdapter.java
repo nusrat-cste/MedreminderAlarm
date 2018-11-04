@@ -1,6 +1,9 @@
 package com.example.nusra.medreminder;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.text.Layout;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -16,17 +19,20 @@ import android.widget.Toast;
 import java.util.ArrayList;
 
 public class AlarmTaskAdapter extends ArrayAdapter<AnAlarmTask> {
+    private final SQLiteDatabaseHandler db;
     Context con;
     int res;
+
 
     public AlarmTaskAdapter(Context context, int resource, ArrayList<AnAlarmTask> alarmData) {
         super(context, resource, alarmData);
         this.con = context;
         this.res = resource;
+        db = SQLiteDatabaseHandler.getHelper(context);
     }
 
     @Override
-    public View getView(int position, View convertView, ViewGroup parent) {
+    public View getView(final int position, View convertView, ViewGroup parent) {
         final AnAlarmTask alarmData=getItem(position);
 
         if(convertView==null){
@@ -54,8 +60,8 @@ public class AlarmTaskAdapter extends ArrayAdapter<AnAlarmTask> {
 
         convertView.setLongClickable(true); //needed here because this is a custom adapter
         final LinearLayout _edit = (LinearLayout) convertView.findViewById(R.id.edit_delete);
-        final ImageButton btn_edit = (ImageButton) convertView.findViewById(R.id.ib_edit);
-        final ImageButton btn_del = (ImageButton) convertView.findViewById(R.id.ib_delete);
+        final Button btn_edit = (Button) convertView.findViewById(R.id.ib_edit);
+        final Button btn_del = (Button) convertView.findViewById(R.id.ib_delete);
 
         convertView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -68,14 +74,40 @@ public class AlarmTaskAdapter extends ArrayAdapter<AnAlarmTask> {
                 btn_edit.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        Toast.makeText(getContext(),"Do you want to edit this alarm? ",Toast.LENGTH_SHORT).show();
+                        Intent intent = new Intent(getContext(),EditAnAlarmActivity.class);
+                        intent.putExtra("alarmdata", alarmData);
+                        getContext().startActivity(intent);
                     }
                 });
 
                 btn_del.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        Toast.makeText(getContext(),"Do you want to delete this alarm? ",Toast.LENGTH_SHORT).show();
+                        AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+                        builder.setMessage("Are you sure you want to delete this reminder?");
+
+                        builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                //perform any action
+                                db.deleteOne(alarmData);
+                                remove(alarmData); //deleting item from view
+                                notifyDataSetChanged();
+                                Toast.makeText(getContext(), "alarm deleted", Toast.LENGTH_SHORT).show();
+                            }
+                        });
+
+                        builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                //perform any action
+                                Toast.makeText(getContext(), "do nothing", Toast.LENGTH_SHORT).show();
+                            }
+                        });
+
+                        //creating alert dialog
+                        AlertDialog alertDialog = builder.create();
+                        alertDialog.show();
                     }
                 });
             }
@@ -83,7 +115,7 @@ public class AlarmTaskAdapter extends ArrayAdapter<AnAlarmTask> {
         return convertView;
     }
 
-    private String timeFormatToDisplay(int alarmSetHour, int alarmSetMinutes, String amORpm) {
+    public static String timeFormatToDisplay(int alarmSetHour, int alarmSetMinutes, String amORpm) {
         String hour_string = String.valueOf(alarmSetHour);
         String minute_string= String.valueOf(alarmSetMinutes);
         if (alarmSetHour > 12) {

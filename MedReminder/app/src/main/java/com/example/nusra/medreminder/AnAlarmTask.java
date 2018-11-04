@@ -1,6 +1,8 @@
 package com.example.nusra.medreminder;
 
-public class AnAlarmTask {
+import java.io.Serializable;
+
+public class AnAlarmTask implements Serializable {
     String alarmTaskName;
     int alarmTaskId;
     String alarmFrequency;

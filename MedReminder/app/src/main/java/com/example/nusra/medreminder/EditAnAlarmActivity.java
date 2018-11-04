@@ -10,9 +10,9 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
-import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -20,9 +20,8 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
-import static java.util.Calendar.getInstance;
+public class EditAnAlarmActivity extends AppCompatActivity {
 
-public class AddAMedicineInfo extends AppCompatActivity {
     EditText tv_taskName ;
     TextView alarm_set_message;
     Button addAlarm;
@@ -45,7 +44,7 @@ public class AddAMedicineInfo extends AppCompatActivity {
         db = SQLiteDatabaseHandler.getHelper(this);
         setContentView(R.layout.activity_add_amedicine_info);
         Intent intent = getIntent();
-
+        final AnAlarmTask A = (AnAlarmTask) intent.getSerializableExtra("alarmdata");
         Date c = Calendar.getInstance().getTime();
 
         SimpleDateFormat df = new SimpleDateFormat("MM-dd-yyyy");
@@ -56,10 +55,16 @@ public class AddAMedicineInfo extends AppCompatActivity {
         addAlarm = (Button) findViewById(R.id.bt_add_alarm);
         l = (LinearLayout) findViewById(R.id.linearLayout3);
 
-        SimpleDateFormat dateFormat = new SimpleDateFormat("hh.mm aa");
-        final String formattime = dateFormat.format(c);
-        addAlarm.setText(formattime);
+        String current_Alarm = AlarmTaskAdapter.timeFormatToDisplay(A.alarmSetHour,A.alarmSetMinutes,"AM");
+        addAlarm.setText(current_Alarm);
 
+        if(A.alarmFrequency.equals("Multiple")){
+            ((CheckBox)findViewById(R.id.checkbox_repeat)).setChecked(true);
+            l.setVisibility(View.VISIBLE);
+            onCheckboxInitialized(A.alarmDays);
+        }
+
+        tv_taskName.setText(A.alarmTaskName);
         addAlarm.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -78,8 +83,8 @@ public class AddAMedicineInfo extends AppCompatActivity {
 
                 if(alarmFrequency.equals("Once"))
                 {
-                    AnAlarmTask _task = new AnAlarmTask(alarmTaskname, 1, alarmFrequency, alarmdays , formattedDate, hours, minutes);
-                    db.addAnAlarmTask(_task);
+                    AnAlarmTask _task = new AnAlarmTask(alarmTaskname, A.alarmTaskId, alarmFrequency, alarmdays , formattedDate, hours, minutes);
+                    db.updateAnAlarmTask(_task);
                 }
                 else if(alarmFrequency.equals("Multiple")) {
                     for (String day : Weekdays
@@ -87,8 +92,9 @@ public class AddAMedicineInfo extends AppCompatActivity {
                         alarmdays += day + ",";
                     }
                     alarmdays = alarmdays.substring(0, alarmdays.length() - 1);
-                    AnAlarmTask _task = new AnAlarmTask(alarmTaskname, 1, alarmFrequency, alarmdays , formattedDate, hours, minutes);
-                    db.addAnAlarmTask(_task);
+
+                    AnAlarmTask _task = new AnAlarmTask(alarmTaskname, A.alarmTaskId, alarmFrequency, alarmdays , formattedDate, hours, minutes);
+                    db.updateAnAlarmTask(_task);
                 }
 
 
@@ -97,18 +103,47 @@ public class AddAMedicineInfo extends AppCompatActivity {
         });
     }
 
+    public void onCheckboxInitialized(String days){
+        //add checks on checkboxes based on DB.
+        String[] _days = days.split(",");
+        for (String day:_days
+                ) {
+            if(day.equals("Sat")){
+                ((CheckBox)findViewById(R.id.check_sat)).setChecked(true);
+            }
+            if(day.equals("Sun")){
+                ((CheckBox)findViewById(R.id.check_sun)).setChecked(true);
+            }
+            if(day.equals("Mon")){
+                ((CheckBox)findViewById(R.id.check_mon)).setChecked(true);
+            }
+            if(day.equals("Tues")){
+                ((CheckBox)findViewById(R.id.check_tues)).setChecked(true);
+            }
+            if(day.equals("Wed")){
+                ((CheckBox)findViewById(R.id.check_wed)).setChecked(true);
+            }
+            if(day.equals("Thurs")){
+                ((CheckBox)findViewById(R.id.check_thur)).setChecked(true);
+            }
+            if(day.equals("Fri")){
+                ((CheckBox)findViewById(R.id.check_fri)).setChecked(true);
+            }
+        }
+    }
     public void onCheckboxClicked(View view) {
         boolean checked = ((CheckBox) view).isChecked();
 
         // Check which checkbox was clicked
         switch(view.getId()) {
+
             case R.id.checkbox_repeat:
                 if (checked){
                     l.setVisibility(View.VISIBLE);
                     alarmFrequency = "Multiple";
                     Log.e("Data",alarmFrequency);
                 }
-            else {
+                else {
                     alarmFrequency = "Once";
                     l.setVisibility(View.INVISIBLE);
                     Log.e("Data",alarmFrequency);
@@ -122,94 +157,94 @@ public class AddAMedicineInfo extends AppCompatActivity {
                 }
                 else{
                     if(Weekdays.contains("Mon")){
-                    Weekdays.remove("Mon");
-                    Log.e("Data","monday removed");
+                        Weekdays.remove("Mon");
+                        Log.e("Data","monday removed");
                     }
                 }
                 break;
 
-                case R.id.check_tues:
-                    if (checked){
-                        if(!Weekdays.contains("Tues")){
-                            Weekdays.add("Tues");
-                            Log.e("Data","Tuesday added");}
+            case R.id.check_tues:
+                if (checked){
+                    if(!Weekdays.contains("Tues")){
+                        Weekdays.add("Tues");
+                        Log.e("Data","Tuesday added");}
+                }
+                else {
+                    if(Weekdays.contains("Tues")){
+                        Weekdays.remove("Tues");
+                        Log.e("Data","Tuesday removed");
                     }
-                    else {
-                        if(Weekdays.contains("Tues")){
-                            Weekdays.remove("Tues");
-                            Log.e("Data","Tuesday removed");
-                        }
-                    }
-                    break;
+                }
+                break;
 
-                case R.id.check_wed:
-                    if (checked){
-                        if(!Weekdays.contains("Wed")){
-                            Weekdays.add("Wed");
-                            Log.e("Data","Wednesday added");}
+            case R.id.check_wed:
+                if (checked){
+                    if(!Weekdays.contains("Wed")){
+                        Weekdays.add("Wed");
+                        Log.e("Data","Wednesday added");}
+                }
+                else {
+                    if(Weekdays.contains("Wed")){
+                        Weekdays.remove("Wed");
+                        Log.e("Data","Wednesday removed");
                     }
-                    else {
-                        if(Weekdays.contains("Wed")){
-                            Weekdays.remove("Wed");
-                            Log.e("Data","Wednesday removed");
-                        }
-                    }
-                    break;
+                }
+                break;
 
-                case R.id.check_thur:
-                    if (checked){
-                        if(!Weekdays.contains("Thurs")){
-                            Weekdays.add("Thurs");
-                            Log.e("Data","Thursday added");}
+            case R.id.check_thur:
+                if (checked){
+                    if(!Weekdays.contains("Thurs")){
+                        Weekdays.add("Thurs");
+                        Log.e("Data","Thursday added");}
+                }
+                else {
+                    if(Weekdays.contains("Thurs")){
+                        Weekdays.remove("Thurs");
+                        Log.e("Data","Thursday removed");
                     }
-                    else {
-                        if(Weekdays.contains("Thurs")){
-                            Weekdays.remove("Thurs");
-                            Log.e("Data","Thursday removed");
-                        }
-                    }
-                    break;
+                }
+                break;
 
-                case R.id.check_fri:
-                    if (checked){
-                        if(!Weekdays.contains("Fri")){
-                            Weekdays.add("Fri");
-                            Log.e("Data","Friday added");}
+            case R.id.check_fri:
+                if (checked){
+                    if(!Weekdays.contains("Fri")){
+                        Weekdays.add("Fri");
+                        Log.e("Data","Friday added");}
+                }
+                else {
+                    if(Weekdays.contains("Fri")){
+                        Weekdays.remove("Fri");
+                        Log.e("Data","Friday removed");
                     }
-                    else {
-                        if(Weekdays.contains("Fri")){
-                            Weekdays.remove("Fri");
-                            Log.e("Data","Friday removed");
-                        }
-                    }
-                    break;
+                }
+                break;
 
-                case R.id.check_sat:
-                    if (checked){
-                        if(!Weekdays.contains("Sat")){
-                            Weekdays.add("Sat");
-                            Log.e("Data","Saturday added");}
-                    }
-                    else {
-                        if(Weekdays.contains("Sat")){
-                            Weekdays.remove("Sat");
-                            Log.e("Data","Saturday removed");}
-                    }
-                    break;
+            case R.id.check_sat:
+                if (checked){
+                    if(!Weekdays.contains("Sat")){
+                        Weekdays.add("Sat");
+                        Log.e("Data","Saturday added");}
+                }
+                else {
+                    if(Weekdays.contains("Sat")){
+                        Weekdays.remove("Sat");
+                        Log.e("Data","Saturday removed");}
+                }
+                break;
 
-                case R.id.check_sun:
-                    if (checked){
-                        if(!Weekdays.contains("Sun")){
-                            Weekdays.add("Sun");
-                            Log.e("Data","Sunday added");}
+            case R.id.check_sun:
+                if (checked){
+                    if(!Weekdays.contains("Sun")){
+                        Weekdays.add("Sun");
+                        Log.e("Data","Sunday added");}
+                }
+                else {
+                    if(Weekdays.contains("Sun")){
+                        Weekdays.remove("Sun");
+                        Log.e("Data","Sunday removed");
                     }
-                    else {
-                        if(Weekdays.contains("Sun")){
-                            Weekdays.remove("Sun");
-                            Log.e("Data","Sunday removed");
-                        }
-                    }
-                    break;
+                }
+                break;
         }
     }
 

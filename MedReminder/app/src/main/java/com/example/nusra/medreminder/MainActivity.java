@@ -35,7 +35,6 @@ public class MainActivity extends AppCompatActivity {
     private SQLiteDatabaseHandler db;
     ListView listView;
 
-    @TargetApi(Build.VERSION_CODES.N)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -51,7 +50,6 @@ public class MainActivity extends AppCompatActivity {
 
         alarm_manager = (AlarmManager) getSystemService(ALARM_SERVICE);
         this.context = this;
-
 //        db.deleteAll();
         // To get all the alarms stored in the DB
         ArrayList<AnAlarmTask> allAlarmTasks = db.getAllAlarmTasks();
@@ -59,7 +57,7 @@ public class MainActivity extends AppCompatActivity {
         listView = (ListView)findViewById(R.id.list_of_tasks);
 //        listView.setLongClickable(true);
 
-        ArrayAdapter adapter = new AlarmTaskAdapter(this,R.layout.single_alarmtask_list_item, allAlarmTasks);
+        final ArrayAdapter adapter = new AlarmTaskAdapter(this,R.layout.single_alarmtask_list_item, allAlarmTasks);
 
         listView.setAdapter(adapter); //binding all tasks to listview
 
@@ -75,33 +73,53 @@ public class MainActivity extends AppCompatActivity {
         if (allAlarmTasks != null) {
 
             for (AnAlarmTask Task:allAlarmTasks) {
+
                 Calendar calendar = getInstance();
-
                 Log.e("Data",Task.getAlarmTaskName()+" "+Task.alarmTaskName);
+                int year = calendar.get(Calendar.YEAR);
+                int month = calendar.get(Calendar.MONTH);
+                int day = calendar.get(Calendar.DAY_OF_MONTH);
 
-                calendar.set(Calendar.HOUR_OF_DAY, Task.getAlarmSetHour());
-                calendar.set(Calendar.MINUTE, Task.getAlarmSetMinutes());
-                calendar.set(Calendar.SECOND, Task.getAlarmSetSeconds());
-                calendar.set(Calendar.MILLISECOND, Task.getAlarmSetMilliSec());
+                if(Task.alarmFrequency.equals("Once"))
+                {
+//                    Logic for triggering alarm only for once
+                    calendar.set(Calendar.YEAR, year);
+                    calendar.set(Calendar.MONTH, month);
+                    calendar.set(Calendar.DAY_OF_MONTH, day);
+                    calendar.set(Calendar.HOUR_OF_DAY, Task.getAlarmSetHour());
+                    calendar.set(Calendar.MINUTE, Task.getAlarmSetMinutes());
+                    calendar.set(Calendar.SECOND, Task.getAlarmSetSeconds());
+                    calendar.set(Calendar.MILLISECOND, Task.getAlarmSetMilliSec());
 
-                if(calendar.before(Calendar.getInstance())) {
-                    continue;
-                }
+                    if(calendar.before(Calendar.getInstance())) {
+                        continue;
+                    }
 
-                Intent my_intent = new Intent(getApplicationContext(), Alarm_Receiver.class);
+                    Intent my_intent = new Intent(getApplicationContext(), Alarm_Receiver.class);
 
-                my_intent.putExtra("UID",  Task.alarmTaskId);
-                Log.e("Data", "uid is "+ String.valueOf(Task.alarmTaskId));
-                long time = calendar.getTimeInMillis();
+                    my_intent.putExtra("UID",  Task.alarmTaskId);
+                    Log.e("Data", "uid is "+ String.valueOf(Task.alarmTaskId));
+                    long time = calendar.getTimeInMillis();
 
-
-                Log.e("Alarm", "Time" + String.valueOf(time));
+                    Log.e("Alarm", "Time" + String.valueOf(time));
 
                     pending_intent = PendingIntent.getBroadcast(getApplicationContext(),Task.alarmTaskId ,
                             my_intent, PendingIntent.FLAG_UPDATE_CURRENT);
                     //set the alarm manager
                     Log.e("Alarm","Starting alarm manager");
-                    alarm_manager.setExact(AlarmManager.RTC_WAKEUP, time, pending_intent);
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                        alarm_manager.setExact(AlarmManager.RTC_WAKEUP, time, pending_intent);
+                    }
+                }
+
+                else if(Task.alarmFrequency.equals("Multiple")){
+                    String[] days = Task.alarmDays.split(",");
+
+                    if (days.length==7)
+                    for (String _day:days
+                         ) {
+                    }
+                }
             }
         }
         else

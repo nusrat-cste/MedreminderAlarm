@@ -58,7 +58,7 @@ public class SQLiteDatabaseHandler extends SQLiteOpenHelper {
     public void deleteOne(AnAlarmTask analarmTask) {
         // Get reference to writable DB
         SQLiteDatabase db = this.getWritableDatabase();
-        db.delete(TABLE_NAME, "id = ?", new String[] { String.valueOf(analarmTask.getAlarmTaskId()) });
+        db.delete(TABLE_NAME, "alarmTaskId = ?", new String[] { String.valueOf(analarmTask.getAlarmTaskId()) });
         db.close();
     }
 
@@ -105,10 +105,10 @@ public class SQLiteDatabaseHandler extends SQLiteOpenHelper {
                 anAlarmTask.setAlarmFrequency(cursor.getString(2));
                 anAlarmTask.setAlarmSetDate(cursor.getString(3));
                 anAlarmTask.setAlarmDays(cursor.getString(4));
-                anAlarmTask.setAlarmSetHour(Integer.parseInt(cursor.getString(5)));
-                anAlarmTask.setAlarmSetMinutes(Integer.parseInt(cursor.getString(6)));
-                anAlarmTask.setAlarmSetSeconds(Integer.parseInt(cursor.getString(7)));
-                anAlarmTask.setAlarmSetMillis(Integer.parseInt(cursor.getString(8)));
+                anAlarmTask.setAlarmSetHour(cursor.getInt(5));
+                anAlarmTask.setAlarmSetMinutes(cursor.getInt(6));
+                anAlarmTask.setAlarmSetSeconds(cursor.getInt(7));
+                anAlarmTask.setAlarmSetMillis(cursor.getInt(8));
 
                 allAlarmTasks.add(anAlarmTask);
             } while (cursor.moveToNext());
@@ -138,14 +138,31 @@ public class SQLiteDatabaseHandler extends SQLiteOpenHelper {
         db.close();
     }
 
-//    public synchronized SQLiteDatabase getDBInstance(Context mContext) {
-//        SQLiteDatabase db = this.getWritableDatabase();
-//        if (db == null) {
-//            Log.e("Data","DB already exists");
-//            SQLiteDatabaseHandler mdb = new SQLiteDatabaseHandler(mContext);
-//            SQLiteDatabase mDB = this.getWritableDatabase();
-//            db = mDB;
-//        }
-//        return db;
-//    }
+    public void deleteDB(){
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.execSQL("DROP TABLE IF EXISTS " + TABLE_NAME);
+    }
+
+    public int updateAnAlarmTask(AnAlarmTask alarmTask) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues values = new ContentValues();
+
+        values.put(KEY_NAME, alarmTask.getAlarmTaskName());
+        values.put(KEY_FREQUENCY, alarmTask.getAlarmFrequency());
+        values.put(KEY_DAYS, alarmTask.getAlarmDays());
+        values.put(KEY_HOURS, alarmTask.getAlarmSetHour());
+        values.put(KEY_MINUTES, alarmTask.getAlarmSetMinutes());
+        values.put(KEY_SECONDS, alarmTask.getAlarmSetSeconds());
+        values.put(KEY_MILLIS, alarmTask.getAlarmSetMilliSec());
+//        db.insert(TABLE_NAME,null, values);
+        int i = db.update(TABLE_NAME, // table
+                values, // column/value
+                "alarmTaskId = ?", // selections
+                new String[] { String.valueOf(alarmTask.getAlarmTaskId()) });
+
+        db.close();
+
+        return i;
+    }
+
 }
